@@ -145,7 +145,8 @@ Currently you'll have to pull them manually:
 	```
 	docker exec -it docker-daemon /bin/ash
 	```
-2. (Optional for private packages) Login with your username and read-only [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) to access private packages:
+2. (Optional for private packages) Login with your username and read-only [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) to access private packages.
+	Note to choose only "read packages" when creating the PAT since nothing more is needed.
 	```
 	export CR_PAT=YOUR_TOKEN
 	echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
