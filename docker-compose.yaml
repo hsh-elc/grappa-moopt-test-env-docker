@@ -1,0 +1,102 @@
+version: "3"
+services:
+  # Docker Daemon running Docker-Garders 
+  docker-daemon:
+    image: 'docker:dind'
+    container_name: "docker-daemon"
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    privileged: true
+    networks:
+      - grappa-network
+
+  # Redis
+  redis:
+    image: 'bitnami/redis:6.2'
+    container_name: "redis"
+    environment:
+      #- ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_PASSWORD=foobared
+      # default port
+      - REDIS_PORT_NUMBER=6379
+    networks:
+      - grappa-network
+
+  # Tomcat server running Grappa Webservice        
+  grappa-tomcat:
+    build:
+      context: "./grappa"
+    #inherits from 'bitnami/tomcat:9.0'
+    image: 'grappa-tomcat'
+    container_name: "grappa-tomcat"
+    environment:
+      # use hostname of dind
+      - DOCKER_HOST=tcp://docker-daemon:2375
+      - ALLOW_EMPTY_PASSWORD=yes
+      # since moodle listens on 8080 also, tomcat now listens on 8181
+      - TOMCAT_HTTP_PORT_NUMBER=8181
+    depends_on:
+      - "docker-daemon"
+      - "redis"      
+    #volumes: NOT USED ANYMORE SINCE THE ARE COPIED BY DOCKERFILE
+      # volume with war files
+      #- ./grappa/webapps/:/bitnami/tomcat/webapps/
+      # grappa config file
+      #- ./grappa/config/:/etc/grappa/      
+    networks:
+      - grappa-network
+
+  # SQL DB for Moodle
+  mariadb:
+    image: 'bitnami/mariadb:10.3'
+    container_name: "mariadb"
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_moodle
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+      - BITNAMI_DEBUG=true
+    volumes:
+      - './volumes/mariadb_data:/bitnami/mariadb'
+    networks:
+      - grappa-network
+
+  # Moodle with pre-installed MooPT-Plugin
+  moodle-moopt:
+    build:
+      context: "./moopt"
+    # inherits from bitnami/moodle:3
+    image: "moodle-moopt"
+    container_name: "moodle-moopt"
+    #platform: linux/arm64
+    # only container publishing ports outside container-network
+    ports:
+      - '8088:8080'
+      #- '80:8080'
+      - '443:8443'
+    environment:
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_NAME=bitnami_moodle
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MOODLE_USERNAME=test
+      - MOODLE_PASSWORD=test
+      - BITNAMI_DEBUG=true
+      #- NAMI_LOG_LEVEL=trace
+    volumes:
+      - './volumes/moodle_data:/bitnami/moodle'
+      - './volumes/moodledata_data:/bitnami/moodledata'
+    depends_on:
+      - mariadb
+      - grappa-tomcat
+    networks:
+      - grappa-network
+
+# Named network
+networks:
+  grappa-network:
+    name: "grappa-network"
