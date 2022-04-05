@@ -1,11 +1,14 @@
 # grappa-moopt-test-env-docker
-Quickly set up Docker Test Environment for Grappa and MooPT
 
+Quickly set up Docker Test Environment for Grappa and MooPT.
 
-# TODO...
-- update `grappa-config.yaml` to 2.2.0
-- list requirements: docker-compose v. etc...
-- preinstall images in `dind`. maybe try:
+Grappa and MooPT will be installed and connected on first run automatically.
+
+!!! Currently you still have to pull or build docker images locally within `docker-daemon` container (see [Connect to Dockerd](#connect-to-dockerd) below).
+
+# Still to do...
+- [ ] preinstall grader images in `docker-daemon` (see [Connect to Dockerd](#connect-to-dockerd) below).
+- [ ] alternatively preinstall public images in `dind` via `docker-compose`. Something like:
 	```
 	service:
 	  docker:
@@ -14,6 +17,8 @@ Quickly set up Docker Test Environment for Grappa and MooPT
 		  && docker pull ghcr.io/hsh-elc/grappa-backend-dummygrader:latest
 		  "
 	```
+- [ ] list requirements: docker and docker-compose versions
+- [x] update `grappa-config.yaml` to 2.2.0
 
 
 
@@ -47,7 +52,7 @@ docker-compose down
 
 ## Access Moodle
 Moodle will connect to MariaDB and bootstrap everything. 
-Take a coffee until Moodle logs something like "** Moodle setup finished! **" (few minutes on first run).
+Take a coffee until Moodle logs something like "`** Moodle setup finished! **`" (few minutes on first run).
 
 Since all these services are in the `grappa-network` they can communicate to each other but are not exposed outside this network.
 The only container with exposed ports is `moodle-moopt`.
@@ -69,20 +74,30 @@ pw=test
 (These must fit the values in `grappa-config.yaml`)
 
 
-## Permissions
-On Ubuntu it may occurs that there are permission denies.
-...
-Mariadb needs: `1001/root` (user/group)
-...`sudo chown -R 1001 volumes/mariadb_data`
-Moodle needs: `daemon/root` (user/group)
-
-Set correct permissions if needed...
+## Permission Issues for Volumes
+On Ubuntu it may occurs that there are permission denies for writing files in volumes.
+In this case shut down all containers and renew volume folders with script:
 ```
 cd volumes/
 sudo ./clear_folders.sh
 ```
-(Note to run this script with `sudo` _and_ within `volumes/`)
-In trouble on setup make sure these folder are completely empty (not even a contained `.gitkeep` is allowed 🙄. These folders need to be _empty_).
+(Note to run this script with `sudo` _and_ within `volumes/`.)
+
+This will remove the whole directory recursively and create new ones with root permissions.
+
+If this not helps for MariaDB, try following command, to allow access explicitly to user `1001` (set up in Baseimage).
+```
+sudo chown -R 1001 volumes/mariadb_data
+```
+For me it runs with the following perms:
+- MariaDB: `1001/root` (user/group)
+- Moodle: `daemon/root` (user/group)
+
+## Volumes Issue
+In trouble on setup make sure mounted folder are completely empty 
+(not even a contained `.gitkeep` is allowed 🙄. 
+These folders need to be _empty_).
+Use `clear_folders.sh` from `volumes/` for quick cleanup.
 
 
 # Grappa Config
@@ -107,7 +122,7 @@ Connect to running grappa-container:
 docker exec -it grappa-tomcat /bin/bash
 ```
 
-# MooPT config
+# MooPT Config
 To make default settings for MooPT (or Moodle in general), edit file `moopt/defaults.php`.
 Find the help in the [Moodle Documentation](https://docs.moodle.org/311/en/Administration_via_command_line#Custom_site_defaults).
 Apply setting by rebuilding container:
@@ -122,6 +137,23 @@ Since `dind` is build upon an Alpine attach to container with:
 docker exec -it docker-daemon /bin/ash
 ```
 (Note to use `ash` instead of `bash`.)
+
+## Pull Images
+Currently you'll have to pull them manually:
+1. Attach to `docker-daemon`:
+	```
+	docker exec -it docker-daemon /bin/ash
+	```
+2. (Optional for private packages) Login with your username and read-only [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) to access private packages:
+	```
+	export CR_PAT=YOUR_TOKEN
+	echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+	```
+	(see https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+3. Pull desired image, e.g.:
+	```
+	docker pull ghcr.io/hsh-elc/grappa-backendplugin-graflap:latest
+	```
 
 # Used images
 - Independent Docker-Daemon: [`docker:dind`](https://hub.docker.com/_/docker)
