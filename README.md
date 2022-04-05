@@ -18,6 +18,7 @@ Grappa and MooPT will be installed and connected on first run automatically.
 		  "
 	```
 - [ ] list requirements: docker and docker-compose versions
+- [ ] MooPTs input fields are currently not parsed from ProformA
 - [x] update `grappa-config.yaml` to 2.2.0
 
 
