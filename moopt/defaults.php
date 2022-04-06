@@ -15,5 +15,18 @@ $defaults['qtype_moopt']['max_number_free_text_inputs'] = '10';
 // END: MOOPT plugin prefs
 //=========================================================================
 
+//=========================================================================
+// START: Moodle Debugging
+//=========================================================================
+$defaults['moodle']['debug'] = 'ALL';
+$defaults['moodle']['cachejs'] = 'No';
+$defaults['moodle']['enablewebservices'] = 'Yes';
+$defaults['moodle']['enabletrusttext'] = 'Yes';
+$defaults['moodle']['curlsecurityblockedhosts'] = '';
+$defaults['moodle']['curlsecurityallowedport'] = '8181';
+//=========================================================================
+// END: Moodle Debugging
+//=========================================================================
+
 
 //TODO: add other Moodle settings for development (debug etc.)
