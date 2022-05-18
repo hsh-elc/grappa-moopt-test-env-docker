@@ -19,6 +19,7 @@ Grappa and MooPT will be installed and connected on first run automatically.
 	```
 - [ ] list requirements: docker and docker-compose versions
 - [ ] MooPTs input fields are currently not parsed from ProformA
+- [ ] MooPTs default prefs not working properly for Moodles general settings (`moopt/defaults.php`)
 - [x] update `grappa-config.yaml` to 2.2.0
 
 
@@ -26,7 +27,7 @@ Grappa and MooPT will be installed and connected on first run automatically.
 # Getting started 
 
 First run of `docker-compose up` will take a while to config `bitnami-moodle`.
-This will create volume-folder below `/volumes/` as well.
+This will create volume-folder below `volumes/` as well.
 Do this attached, so you can see, when it’s done ;)
 ```
 docker-compose up
